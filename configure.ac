@@ -1,13 +1,18 @@
 AC_PREREQ(2.60)
 
-AC_INIT(Blu-ray movie stream remuxer , 0.1 , fraxinas@opendreambox.org)
+AC_INIT([Blu-ray movie stream remuxer], [0.1], [fraxinas@opendreambox.org])
 
 AM_INIT_AUTOMAKE(bdremux,0.1)
 
-AC_CONFIG_SRCDIR([bdremux.c])
+AC_CONFIG_SRCDIR([src/bdremux.c])
+
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+AC_USE_SYSTEM_EXTENSIONS
+AC_SYS_LARGEFILE
 
 GST_MAJORMINOR=0.10
 GST_REQUIRED=0.10.32
+GST_BAD_REQUIRED=0.10.23
 
 AM_PROG_LIBTOOL
 
@@ -26,9 +31,14 @@ if test "x$HAVE_PKGCONFIG" = "xno"; then
   AC_MSG_ERROR(you need to have pkgconfig installed !)
 fi
 
+# Checks for header files.
+AC_CHECK_HEADERS([stdio.h stdlib.h fcntl.h string.h getopt.h byteswap.h netinet/in.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_SIZE_T
+
 dnl Now we're ready to ask for gstreamer libs and cflags
 dnl And we can also ask for the right version of gstreamer
-
 
 PKG_CHECK_MODULES(GST, \
   gstreamer-$GST_MAJORMINOR >= $GST_REQUIRED,
@@ -74,8 +84,22 @@ if test "x$HAVE_GSTPB_BASE" = "xno"; then
   AC_MSG_NOTICE(no GStreamer Plugins Base libraries found (gstreamer-plugins-base-$GST_MAJORMINOR))
 fi
 
+dnl If we need them, we can also use the bad class libraries
+PKG_CHECK_MODULES(GST_BAD, gstreamer-plugins-bad-$GST_MAJORMINOR >= $GST_BAD_REQUIRED,
+                  HAVE_GST_BAD=yes, HAVE_GST_BAD=no)
+
+dnl Give a warning if we don't have gstreamer libs
+dnl you can turn this into an error if you need them
+if test "x$HAVE_GST_BAD" = "xno"; then
+  AC_MSG_NOTICE(no GStreamer bad plugins class libraries found (gstreamer-plugins-bad-$GST_MAJORMINOR))
+fi
+
 dnl make _CFLAGS and _LIBS available
 AC_SUBST(GSTPB_BASE_CFLAGS)
 AC_SUBST(GSTPB_BASE_LIBS)
 
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([
+Makefile
+src/Makefile
+])
+AC_OUTPUT
