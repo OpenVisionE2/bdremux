@@ -329,6 +329,7 @@ entry_added (GstIndex * index, GstIndexEntry * entry, App * app)
         g_fprintf (app->f_epmap, "entrypoint: %" G_GINT64_FORMAT " ",
             GST_INDEX_ASSOC_VALUE (entry, 0));
         g_fprintf (app->f_epmap, "%" G_GINT64_FORMAT "\n", GST_INDEX_ASSOC_VALUE (entry, 1));
+	fflush(app->f_epmap);
       } else {
         g_print ("GST_INDEX_ENTRY_ASSOCIATION %p, %d: %08x ", entry, entry->id,
             GST_INDEX_ASSOC_FLAGS (entry));
