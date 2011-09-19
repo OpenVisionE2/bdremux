@@ -1,8 +1,7 @@
 AC_PREREQ(2.60)
 
-AC_INIT([Blu-ray movie stream remuxer], [0.1], [fraxinas@opendreambox.org])
-
-AM_INIT_AUTOMAKE(bdremux,0.1)
+AC_INIT([bdremux], [0.1], [fraxinas@opendreambox.org])
+AM_INIT_AUTOMAKE([foreign])
 
 AC_CONFIG_SRCDIR([src/bdremux.c])
 
@@ -12,9 +11,9 @@ AC_SYS_LARGEFILE
 
 GST_MAJORMINOR=0.10
 GST_REQUIRED=0.10.32
-GST_BAD_REQUIRED=0.10.23
+GST_BAD_REQUIRED=0.10.22
 
-AM_PROG_LIBTOOL
+m4_ifdef([LT_INIT], [LT_INIT], [AC_PROG_LIBTOOL])
 
 dnl find a compiler
 AC_PROG_CC
