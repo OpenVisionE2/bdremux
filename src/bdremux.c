@@ -98,7 +98,8 @@ App s_app;
 static void
 bdremux_errout(gchar *string)
 {
-  g_print("ERROR: %s\n", string);
+  g_fprintf(stdout, "ERROR: %s\n", string);
+  fflush(stdout);
   GST_ERROR (string);
   exit(1);
 }
@@ -329,7 +330,7 @@ entry_added (GstIndex * index, GstIndexEntry * entry, App * app)
         g_fprintf (app->f_epmap, "entrypoint: %" G_GINT64_FORMAT " ",
             GST_INDEX_ASSOC_VALUE (entry, 0));
         g_fprintf (app->f_epmap, "%" G_GINT64_FORMAT "\n", GST_INDEX_ASSOC_VALUE (entry, 1));
-	fflush(app->f_epmap);
+        fflush(app->f_epmap);
       } else {
         g_print ("GST_INDEX_ENTRY_ASSOCIATION %p, %d: %08x ", entry, entry->id,
             GST_INDEX_ASSOC_FLAGS (entry));
@@ -365,7 +366,8 @@ static void mux_pad_has_caps_cb(GstPad *pad, GParamSpec * unused, App * app)
 
         if (caps)
         {
-                 g_print("%s:%s has CAPS: %s\n", GST_DEBUG_PAD_NAME(pad), gst_caps_to_string(caps));
+                 g_fprintf(stdout, "%s:%s has CAPS: %s\n", GST_DEBUG_PAD_NAME(pad), gst_caps_to_string(caps));
+                 fflush(stdout);
                  gst_caps_unref (caps);
         }
 }
@@ -451,10 +453,11 @@ demux_pad_added_cb (GstElement * element, GstPad * demuxpad, App * app)
         if (gst_pad_link (parser_srcpad, queue_sinkpad) == 0)
         {
           if (gst_pad_link (queue_srcpad, mux_sinkpad) == 0) {
-            g_print
-                ("linked: Source PID %d to %s\n",
+            g_fprintf
+                (stdout, "linked: Source PID %d to %s\n",
                 app->a_source_pids[0], sinkpadname);
                 g_signal_connect (G_OBJECT (mux_sinkpad), "notify::caps", G_CALLBACK (mux_pad_has_caps_cb), app);
+            fflush(stdout);
           } else {
 	    bdremux_errout(g_strdup_printf("Couldn't link %s:%s to %s:%s", GST_DEBUG_PAD_NAME(queue_srcpad), GST_DEBUG_PAD_NAME(mux_sinkpad)));
 	  }
