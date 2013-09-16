@@ -9,9 +9,8 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
-GST_MAJORMINOR=0.10
-GST_REQUIRED=0.10.32
-GST_BAD_REQUIRED=0.10.22
+GST_MAJORMINOR=1.0
+GST_REQUIRED=1.0.0
 
 m4_ifdef([LT_INIT], [LT_INIT], [AC_PROG_LIBTOOL])
 
@@ -81,16 +80,6 @@ dnl Give a warning if we don't have gstreamer libs
 dnl you can turn this into an error if you need them
 if test "x$HAVE_GSTPB_BASE" = "xno"; then
   AC_MSG_NOTICE(no GStreamer Plugins Base libraries found (gstreamer-plugins-base-$GST_MAJORMINOR))
-fi
-
-dnl If we need them, we can also use the bad class libraries
-PKG_CHECK_MODULES(GST_BAD, gstreamer-plugins-bad-$GST_MAJORMINOR >= $GST_BAD_REQUIRED,
-                  HAVE_GST_BAD=yes, HAVE_GST_BAD=no)
-
-dnl Give a warning if we don't have gstreamer libs
-dnl you can turn this into an error if you need them
-if test "x$HAVE_GST_BAD" = "xno"; then
-  AC_MSG_NOTICE(no GStreamer bad plugins class libraries found (gstreamer-plugins-bad-$GST_MAJORMINOR))
 fi
 
 dnl make _CFLAGS and _LIBS available
