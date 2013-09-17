@@ -461,14 +461,24 @@ queue_filled_cb (GstElement * element, App * app)
 {
   GST_DEBUG ("queue_filled_cb");
 
-//   if (app->auto_pids) {
+  if (app->auto_pids) {
     GST_INFO
-        ("First time queue overrun -> UNBLOCKING all pads and start muxing! (have %i PIDS @ mux)",
+        ("First time queue overrun and auto_pids -> UNBLOCKING all pads and start muxing! (have %i PIDs @ mux)",
         app->requested_pid_count);
     _unblock_pads (app);
-//   }
-  g_signal_handler_disconnect (G_OBJECT (element), app->queue_cb_handler_id);
-
+  }
+  else if (app->requested_pid_count == app->sink_pids_count) {
+    GST_INFO
+        ("First time queue overrun and requested PIDs count (%i) reached number of sink PIDs -> UNBLOCKING all pads and start muxing!",
+        app->requested_pid_count);  
+    _unblock_pads (app);
+  }
+  if (app->requested_pid_count >= app->sink_pids_count)
+  {
+    GST_INFO
+        ("Disconnect queue_filled_cb! requested_pid_count=%i, sink_pids_count=%i", app->requested_pid_count, app->sink_pids_count);
+    g_signal_handler_disconnect (G_OBJECT (element), app->queue_cb_handler_id);
+  }
 }
 
 static void
@@ -501,8 +511,9 @@ demux_pad_added_cb (GstElement * element, GstPad * demuxpad, App * app)
     sscanf (demuxpadname + 6, "%x", &sourcepid);
     if (app->auto_pids) {
       app->a_source_pids[0] = sourcepid;
+      if (app->a_sink_pids[0] == -1)
+        app->sink_pids_count++;
       app->a_sink_pids[0] = sourcepid;
-      app->sink_pids_count++;
       app->source_pids_count++;
     }
     if (sourcepid == app->a_source_pids[0] && app->videoparser == NULL) {
