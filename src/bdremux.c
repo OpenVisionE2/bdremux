@@ -326,19 +326,18 @@ entry_added (GstIndex * index, GstIndexEntry * entry, App * app)
     case GST_INDEX_ENTRY_ASSOCIATION:
     {
       gint i;
-      if (entry->id == 1 && GST_INDEX_NASSOCS (entry) == 2) {
+      if (entry->id == 1 && GST_INDEX_NASSOCS (entry) == 2 && GST_INDEX_ASSOC_VALUE (entry, 1) != -1) {
         g_fprintf (app->f_epmap, "entrypoint: %" G_GINT64_FORMAT " ",
             GST_INDEX_ASSOC_VALUE (entry, 0));
         g_fprintf (app->f_epmap, "%" G_GINT64_FORMAT "\n", GST_INDEX_ASSOC_VALUE (entry, 1));
         fflush(app->f_epmap);
       } else {
-        g_print ("GST_INDEX_ENTRY_ASSOCIATION %p, %d: %08x ", entry, entry->id,
+        GST_DEBUG ("GST_INDEX_ENTRY_ASSOCIATION %p, %d: %08x ", entry, entry->id,
             GST_INDEX_ASSOC_FLAGS (entry));
         for (i = 0; i < GST_INDEX_NASSOCS (entry); i++) {
-          g_print ("%d %" G_GINT64_FORMAT " ", GST_INDEX_ASSOC_FORMAT (entry,
+          GST_DEBUG ("%d %" G_GINT64_FORMAT " ", GST_INDEX_ASSOC_FORMAT (entry,
                   i), GST_INDEX_ASSOC_VALUE (entry, i));
         }
-        g_print ("\n");
       }
       break;
     }
@@ -375,9 +374,8 @@ static void mux_pad_has_caps_cb(GstPad *pad, GParamSpec * unused, App * app)
 static void
 queue_filled_cb (GstElement * element, App * app)
 {
-  GST_DEBUG ("queue_filled_cb");
-
-  if (app->auto_pids)
+  GST_DEBUG ("queue_filled_cb requested_pid_count=%i, no_sink_pids=%i app->no_source_pids=%i", app->requested_pid_count, app->no_sink_pids, app->no_source_pids);
+  if (app->auto_pids || app->requested_pid_count == app->no_sink_pids)
   {
     GstPad *queue_srcpad = NULL;
     gchar srcpadname[9];
@@ -391,9 +389,12 @@ queue_filled_cb (GstElement * element, App * app)
        GST_DEBUG ("UNBLOCKING %s returned %i", srcpadname, ret);
      }
   }
-  g_signal_handler_disconnect(G_OBJECT(element),
-			app->queue_cb_handler_id);
-
+  if (app->requested_pid_count >= app->no_sink_pids)
+  {
+    GST_DEBUG
+        ("Disconnect queue_filled_cb! requested_pid_count=%i, no_sink_pids=%i", app->requested_pid_count, app->no_sink_pids);
+    g_signal_handler_disconnect(G_OBJECT(element), app->queue_cb_handler_id);
+  }
 }
 
 static void
@@ -415,8 +416,11 @@ demux_pad_added_cb (GstElement * element, GstPad * demuxpad, App * app)
     sscanf (demuxpadname + 6, "%x", &sourcepid);
     if (app->auto_pids) {
       app->a_source_pids[0] = sourcepid;
-      app->a_sink_pids[0] = sourcepid;
-      app->no_sink_pids++;
+      if (app->a_sink_pids[0] == -1)
+      {
+        app->a_sink_pids[0] = sourcepid;
+        app->no_sink_pids++;
+      }
       app->no_source_pids++;
     }
     if (sourcepid == app->a_source_pids[0] && app->videoparser == NULL) {
@@ -804,6 +808,7 @@ main (int argc, char *argv[])
 
   g_object_set (G_OBJECT (app->queue), "max-size-bytes", app->queue_size, NULL);
   g_object_set (G_OBJECT (app->queue), "max-size-buffers", 0, NULL);
+  g_object_set (G_OBJECT (app->queue), "max-size-time", 0, NULL);
 
   g_object_set (G_OBJECT (app->m2tsmux), "m2ts-mode", TRUE, NULL);
   g_object_set (G_OBJECT (app->m2tsmux), "alignment", 32, NULL);
