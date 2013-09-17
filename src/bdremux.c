@@ -940,6 +940,7 @@ main (int argc, char *argv[])
 
   g_object_set (G_OBJECT (app->queue), "max-size-bytes", app->queue_size, NULL);
   g_object_set (G_OBJECT (app->queue), "max-size-buffers", 0, NULL);
+  g_object_set (G_OBJECT (app->queue), "max-size-time", 0, NULL);
 
   g_object_set (G_OBJECT (app->m2tsmux), "m2ts-mode", TRUE, NULL);
   g_object_set (G_OBJECT (app->m2tsmux), "alignment", 32, NULL);
