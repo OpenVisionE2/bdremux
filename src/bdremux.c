@@ -20,6 +20,7 @@
 // gcc -Wall -g `pkg-config gstreamer-1.0 --cflags --libs` bdremux.c -o bdremux
 
 #include <gst/gst.h>
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -102,7 +103,7 @@ bdremux_errout (gchar * string)
 {
   g_fprintf (stdout, "ERROR: %s\n", string);
   fflush (stdout);
-  GST_ERROR (string);
+  GST_ERROR ("%s", string);
   exit (1);
 }
 
@@ -175,17 +176,17 @@ do_seek (App * app)
     flags |= GST_SEEK_FLAG_SEGMENT;
 
   gst_element_query_position ((app->pipeline), GST_FORMAT_TIME, &in_pos);
-  GST_DEBUG ("do_seek::initial gst_element_query_position = %lld ms",
+  GST_DEBUG ("do_seek::initial gst_element_query_position = %" G_GUINT64_FORMAT " ms",
       in_pos / 1000000);
 
   in_pos =
       MPEGTIME_TO_GSTTIME (app->seek_segments[app->current_segment].in_pts);
-  GST_DEBUG ("do_seek::in_time for segment %i = %lld ms", app->current_segment,
+  GST_DEBUG ("do_seek::in_time for segment %i = %" G_GUINT64_FORMAT " ms", app->current_segment,
       in_pos / 1000000);
 
   guint64 out_pts = app->seek_segments[app->current_segment].out_pts;
   out_pos = (out_pts == -1) ? out_pts : MPEGTIME_TO_GSTTIME (app->seek_segments[app->current_segment].out_pts);
-  GST_DEBUG ("do_seek::out_time for segment %i = %lld ms (pts=%lld)", app->current_segment,
+  GST_DEBUG ("do_seek::out_time for segment %i = %" G_GUINT64_FORMAT " ms (pts=%" G_GUINT64_FORMAT ")", app->current_segment,
       out_pos / 1000000, out_pts);
 
   ret = gst_element_seek ((app->pipeline), rate, GST_FORMAT_TIME, flags,
@@ -193,7 +194,7 @@ do_seek (App * app)
 
   gst_element_query_position ((app->pipeline), GST_FORMAT_TIME, &in_pos);
   GST_DEBUG
-      ("do_seek::seek command returned %i. new gst_element_query_position = %lld ms",
+      ("do_seek::seek command returned %i. new gst_element_query_position = %" G_GUINT64_FORMAT " ms",
       ret, in_pos / 1000000);
 
   if (ret)
@@ -896,7 +897,7 @@ main (int argc, char *argv[])
     load_cutlist (app);
 
   for (i = 0; i < app->segment_count; i++) {
-    GST_INFO ("segment count %i index %i in_pts %lld out_pts %lld", i,
+    GST_INFO ("segment count %i index %i in_pts %" G_GUINT64_FORMAT " out_pts %" G_GUINT64_FORMAT, i,
         app->seek_segments[i].index, app->seek_segments[i].in_pts,
         app->seek_segments[i].out_pts);
   }
